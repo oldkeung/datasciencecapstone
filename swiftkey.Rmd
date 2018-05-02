@@ -98,6 +98,10 @@ badWord <- readLines(badWordConn, 1000)
 close(badWordConn)
 ```
 
+### 3 Data Summary
+
 ```{r}
 
 ```
+
+### 4 Approach
