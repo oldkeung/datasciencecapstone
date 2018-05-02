@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## 1. Introduciton
 
-```{r}
+```{r,warning=FALSE}
 library(quanteda)
 library(markovchain)
 library(textcat)
@@ -29,16 +29,16 @@ zipfile <- "Coursera-SwiftKey.zip"
 #unzip(zipfile, exdir = ".")
 ```
 
-```{r, cache=TRUE}
-blogsConn <- file("final/en_US/en_US.blogs.txt", "r") 
+```{r "Load Data", cache=TRUE}
+blogConn <- file("final/en_US/en_US.blogs.txt", "r") 
 newsConn <- file("final/en_US/en_US.news.txt", "r") 
 twitterConn <- file("final/en_US/en_US.twitter.txt", "r") 
 
-blogs <- readLines(blogsConn, 1000)
-news <- readLines(newsConn, 1000)
-twitter <- readLines(twitterConn, 1000)
+blog <- readLines(blogConn)
+news <- readLines(newsConn)
+twitter <- readLines(twitterConn)
 
-close(blogsConn)
+close(blogConn)
 close(newsConn)
 close(twitterConn)
 ```
@@ -46,16 +46,19 @@ close(twitterConn)
 ```{r Sampling}
 set.seed(88888)
 
-blogsCount <- length(blogs)
+blogCount <- length(blog)
+newsCount <- length(news)
+twitterCount <- length(twitter)
 
-blogsSample <- blogs[rbinom(blogsCount, 1, 0.2) == 1]
+blogSample <- blog[rbinom(blogCount, 1, 0.05) == 1]
+newsSample <- news[rbinom(newsCount, 1, 0.05) == 1]
+twitterSample <- twitter[rbinom(twitterCount, 1, 0.05) == 1]
 ```
 
 ### 2.1 Tokenization 
 
 ```{r}
-
-all <- c(blogs, news, twitter)
+all <- c(blogSample, newsSample, twitterSample)
 
 allCorpus <- corpus(all)
 
@@ -101,7 +104,7 @@ close(badWordConn)
 ### 3 Data Summary
 
 ```{r}
-
+textplot_wordcloud(bigramdfm <- dfm(bigram), max_words = 30)
 ```
 
 ### 4 Approach
