@@ -1,0 +1,103 @@
+---
+title: "Untitled"
+author: "William Lai"
+date: "10 April 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. Introduciton
+
+```{r}
+library(quanteda)
+library(markovchain)
+library(textcat)
+```
+
+## 2. Getting and Cleansing Data
+
+```{r, cache=TRUE}
+url <- "https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip"
+zipfile <- "Coursera-SwiftKey.zip"
+```
+
+```{r "Download Data", cache=TRUE}
+#download.file(url, destfile = zipfile)
+#unzip(zipfile, exdir = ".")
+```
+
+```{r, cache=TRUE}
+blogsConn <- file("final/en_US/en_US.blogs.txt", "r") 
+newsConn <- file("final/en_US/en_US.news.txt", "r") 
+twitterConn <- file("final/en_US/en_US.twitter.txt", "r") 
+
+blogs <- readLines(blogsConn, 1000)
+news <- readLines(newsConn, 1000)
+twitter <- readLines(twitterConn, 1000)
+
+close(blogsConn)
+close(newsConn)
+close(twitterConn)
+```
+
+```{r Sampling}
+set.seed(88888)
+
+blogsCount <- length(blogs)
+
+blogsSample <- blogs[rbinom(blogsCount, 1, 0.2) == 1]
+```
+
+### 2.1 Tokenization 
+
+```{r}
+
+
+all <- c(blogs, news, twitter)
+
+allCorpus <- corpus(all)
+
+samplesdfm <- dfm(allCorpus, toLower = TRUE, removeNumbers = TRUE, removePunct = TRUE, removeTwitter = TRUE, ignoredFeatures = stopwords("english"), stem = TRUE)
+
+toks <- tokens(all, remove_punct = TRUE)
+
+bigram <- tokens_ngrams(toks, n = 2)
+trigram <- tokens_ngrams(toks, n = 3)
+quadgram <- tokens_ngrams(toks, n = 4)
+
+head(bigram[[1]], 10)
+head(trigram[[1]], 10)
+head(quadgram[[1]], 10)
+
+bigramdfm <- dfm(bigram)
+#removefeatures(bigramdfm, "in")
+
+topfeatures(bigramdfm, 10)
+
+```
+
+### 2.2 Profanity filtering
+
+```{r, cache=TRUE}
+badWordUrl <- "https://www.freewebheaders.com/wordpress/wp-content/uploads/full-list-of-bad-words-text-file_2018_03_26_26.zip"
+badWordzipfile <- "full-list-of-bad-words-text-file.zip"
+```
+
+```{r "Download Bad Words Data", cache=TRUE}
+download.file(badWordUrl, destfile = badWordzipfile)
+unzip(badWordzipfile, exdir = ".")
+```
+
+```{r, cache=TRUE}
+badWordConn <- file("full-list-of-bad-words-text-file_2018_03_26.txt", "r") 
+
+badWord <- readLines(badWordConn, 1000)
+
+close(badWordConn)
+```
+
+```{r}
+```
