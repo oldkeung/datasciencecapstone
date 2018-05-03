@@ -7,7 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_chunk$set(cache = TRUE)
+#knitr::opts_chunk$set(cache = TRUE)
 ```
 
 ## 1. Introduciton
@@ -107,11 +107,7 @@ close(badWordConn)
 
 1. Word Count
 
-Data Source | Word Counts
----
-Blog | `r ntoken(blogSample)`
-News | `r ntoken(newsSample)`
-Twitter | `r ntoken(twitterSample)`
+
 
 2. Line Count
 
