@@ -7,11 +7,12 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(cache = TRUE)
 ```
 
 ## 1. Introduciton
 
-```{r,warning=FALSE}
+```{r, message = FALSE, warning = FALSE}
 library(quanteda)
 library(markovchain)
 library(textcat)
@@ -66,6 +67,7 @@ samplesdfm <- dfm(allCorpus, toLower = TRUE, removeNumbers = TRUE, removePunct =
 
 toks <- tokens(all, remove_punct = TRUE)
 
+unigram <- tokens_ngrams(toks, n = 1)
 bigram <- tokens_ngrams(toks, n = 2)
 trigram <- tokens_ngrams(toks, n = 3)
 quadgram <- tokens_ngrams(toks, n = 4)
@@ -74,11 +76,11 @@ head(bigram[[1]], 10)
 head(trigram[[1]], 10)
 head(quadgram[[1]], 10)
 
+unigramdfm <- dfm(unigram)
 bigramdfm <- dfm(bigram)
+trigramdfm <- dfm(trigram)
+quadgramdfm <- dfm(quadgram)
 #removefeatures(bigramdfm, "in")
-
-topfeatures(bigramdfm, 10)
-
 ```
 
 ### 2.2 Profanity filtering
@@ -103,8 +105,25 @@ close(badWordConn)
 
 ### 3 Data Summary
 
+1. Word Count
+
+Data Source | Word Counts
+---
+Blog | `r ntoken(blogSample)`
+News | `r ntoken(newsSample)`
+Twitter | `r ntoken(twitterSample)`
+
+2. Line Count
+
+3. Features
+
 ```{r}
-textplot_wordcloud(bigramdfm <- dfm(bigram), max_words = 30)
+#topfeatures(bigramdfm, 10)
+
+textplot_wordcloud(unigramdfm, max_words = 100)
+textplot_wordcloud(bigramdfm, max_words = 30)
+textplot_wordcloud(trigramdfm, max_words = 30)
+textplot_wordcloud(quadgramdfm, max_words = 30)
 ```
 
 ### 4 Approach
