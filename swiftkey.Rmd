@@ -47,6 +47,10 @@ close(twitterConn)
 ```{r Sampling}
 set.seed(88888)
 
+blogWordCount <- sum(ntoken(blog))
+newsWordCount <- sum(ntoken(news))
+twitterWordCount <- sum(ntoken(twitter))
+
 blogCount <- length(blog)
 newsCount <- length(news)
 twitterCount <- length(twitter)
@@ -71,10 +75,6 @@ unigram <- tokens_ngrams(toks, n = 1)
 bigram <- tokens_ngrams(toks, n = 2)
 trigram <- tokens_ngrams(toks, n = 3)
 quadgram <- tokens_ngrams(toks, n = 4)
-
-head(bigram[[1]], 10)
-head(trigram[[1]], 10)
-head(quadgram[[1]], 10)
 
 unigramdfm <- dfm(unigram)
 bigramdfm <- dfm(bigram)
@@ -108,19 +108,25 @@ close(badWordConn)
 1. Word Count
 
 Data Source | Word Counts
----
-Blog | `r #ntoken(blogSample)`
-News | `r #ntoken(newsSample)`
-Twitter | `r #ntoken(twitterSample)`
+---|---
+Blog | `r blogWordCount`
+News | `r newsWordCount`
+Twitter | `r twitterWordCount`
 
 2. Line Count
+
+Data Source | Line Counts
+---|---
+Blog | `r blogCount`
+News | `r newsCount`
+Twitter | `r twitterCount`
 
 3. Features
 
 ```{r}
-#topfeatures(bigramdfm, 10)
-
+topfeatures(unigramdfm, 10)
 textplot_wordcloud(unigramdfm, max_words = 100)
+topfeatures(bigramdfm, 10)
 textplot_wordcloud(bigramdfm, max_words = 30)
 textplot_wordcloud(trigramdfm, max_words = 30)
 textplot_wordcloud(quadgramdfm, max_words = 30)
