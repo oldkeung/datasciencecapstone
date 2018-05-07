@@ -1,7 +1,7 @@
 ---
 title: "SwiftKey Text Prediction Milestone Report"
 author: "William Lai"
-date: "10 April 2018"
+date: "07 May 2018"
 output: html_document
 ---
 
@@ -18,6 +18,7 @@ library(markovchain)
 library(textcat)
 library(wordcloud)
 library(RColorBrewer)
+library(ggplot2)
 ```
 
 ## 2. Getting and Cleansing Data
@@ -133,8 +134,11 @@ Twitter | `r twitterCount`
 ```{r, echo = FALSE}
 printBarPlot <- function(dfm, topN = 10, mainTitle = "Top 10 Features")
 {
-  topFeatures <- topfeatures(dfm, topN)
-  barplot(height = topFeatures, xlab = "ngram", ylab = "Count", horiz = TRUE, main = mainTitle)
+  topFeatures <- rev(topfeatures(dfm, topN))
+  barplot(height = topFeatures, xlab = "ngram", ylab = "Count", main = mainTitle, horiz = TRUE, las = 1)
+  #ggplot(data = topFeatures, aes(x = topFeatures, y = $names)) +
+  #  geom_bar(stat="identity") + 
+  #  coord_flip()
 }
 
 printWordCloud <- function(dfm, maxWordCount)
@@ -147,7 +151,7 @@ printWordCloud <- function(dfm, maxWordCount)
 #### 3.3.1 Unigram
 
 ```{r, echo = FALSE}
-par(1, 2)
+par(mfrow = c(1, 2))
 printBarPlot(unigramdfm)
 printWordCloud(unigramdfm, 500)
 ```
@@ -155,6 +159,7 @@ printWordCloud(unigramdfm, 500)
 #### 3.3.2 Bigram
 
 ```{r, echo = FALSE}
+par(mfrow = c(1, 2))
 printBarPlot(bigramdfm)
 printWordCloud(bigramdfm, 100)
 ```
@@ -162,6 +167,7 @@ printWordCloud(bigramdfm, 100)
 #### 3.3.3 Trigram
 
 ```{r, echo = FALSE}
+par(mfrow = c(1, 2))
 printBarPlot(trigramdfm)
 printWordCloud(trigramdfm, 20)
 ```
@@ -169,6 +175,7 @@ printWordCloud(trigramdfm, 20)
 #### 3.3.4 Quadgram
 
 ```{r, echo = FALSE}
+par(mfrow = c(1, 2))
 printBarPlot(quadgramdfm)
 printWordCloud(quadgramdfm, 10)
 ```
