@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "SwiftKey Text Prediction Milestone Report"
 author: "William Lai"
 date: "10 April 2018"
 output: html_document
@@ -16,9 +16,13 @@ knitr::opts_chunk$set(cache = TRUE)
 library(quanteda)
 library(markovchain)
 library(textcat)
+library(wordcloud)
+library(RColorBrewer)
 ```
 
 ## 2. Getting and Cleansing Data
+
+### 2.1 Loading Data
 
 ```{r, cache=TRUE}
 url <- "https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip"
@@ -26,8 +30,8 @@ zipfile <- "Coursera-SwiftKey.zip"
 ```
 
 ```{r "Download Data", cache=TRUE}
-#download.file(url, destfile = zipfile)
-#unzip(zipfile, exdir = ".")
+download.file(url, destfile = zipfile)
+unzip(zipfile, exdir = ".")
 ```
 
 ```{r "Load Data", cache=TRUE}
@@ -44,6 +48,14 @@ close(newsConn)
 close(twitterConn)
 ```
 
+### 2.2 Sampling
+
+```{r}
+intervalPercent <- 5
+```
+
+Due to limitation of computing resources, we will only use `r intervalPercent`% of data to perform the exploratory analysis.
+
 ```{r Sampling}
 set.seed(88888)
 
@@ -55,35 +67,30 @@ blogCount <- length(blog)
 newsCount <- length(news)
 twitterCount <- length(twitter)
 
-blogSample <- blog[rbinom(blogCount, 1, 0.05) == 1]
-newsSample <- news[rbinom(newsCount, 1, 0.05) == 1]
-twitterSample <- twitter[rbinom(twitterCount, 1, 0.05) == 1]
+blogSample <- blog[rbinom(blogCount, 1, intervalPercent / 100) == 1]
+newsSample <- news[rbinom(newsCount, 1, intervalPercent / 100) == 1]
+twitterSample <- twitter[rbinom(twitterCount, 1, intervalPercent / 100) == 1]
 ```
 
-### 2.1 Tokenization 
+### 2.3 Tokenization 
 
 ```{r}
 all <- c(blogSample, newsSample, twitterSample)
 
 allCorpus <- corpus(all)
 
-samplesdfm <- dfm(allCorpus, toLower = TRUE, removeNumbers = TRUE, removePunct = TRUE, removeTwitter = TRUE, ignoredFeatures = stopwords("english"), stem = TRUE)
+#samplesdfm <- dfm(allCorpus, toLower = TRUE, removeNumbers = TRUE, removePunct = TRUE, removeTwitter = TRUE, ignoredFeatures = stopwords("english"), stem = TRUE)
 
 toks <- tokens(all, remove_punct = TRUE)
 
-unigram <- tokens_ngrams(toks, n = 1)
-bigram <- tokens_ngrams(toks, n = 2)
-trigram <- tokens_ngrams(toks, n = 3)
-quadgram <- tokens_ngrams(toks, n = 4)
-
-unigramdfm <- dfm(unigram)
-bigramdfm <- dfm(bigram)
-trigramdfm <- dfm(trigram)
-quadgramdfm <- dfm(quadgram)
+unigramdfm <- dfm(tokens_ngrams(toks, n = 1))
+bigramdfm <- dfm(tokens_ngrams(toks, n = 2))
+trigramdfm <- dfm(tokens_ngrams(toks, n = 3))
+quadgramdfm <- dfm(tokens_ngrams(toks, n = 4))
 #removefeatures(bigramdfm, "in")
 ```
 
-### 2.2 Profanity filtering
+### 2.4 Profanity filtering
 
 ```{r, cache=TRUE}
 badWordUrl <- "https://www.freewebheaders.com/wordpress/wp-content/uploads/full-list-of-bad-words-text-file_2018_03_26_26.zip"
@@ -103,9 +110,9 @@ badWord <- readLines(badWordConn, 1000)
 close(badWordConn)
 ```
 
-### 3 Data Summary
+## 3. Data Summary
 
-1. Word Count
+### 3.1 Word Count
 
 Data Source | Word Counts
 ---|---
@@ -113,7 +120,7 @@ Blog | `r blogWordCount`
 News | `r newsWordCount`
 Twitter | `r twitterWordCount`
 
-2. Line Count
+### 3.2 Line Count
 
 Data Source | Line Counts
 ---|---
@@ -121,15 +128,73 @@ Blog | `r blogCount`
 News | `r newsCount`
 Twitter | `r twitterCount`
 
-3. Features
+### 3.3 Features
 
-```{r}
-topfeatures(unigramdfm, 10)
-textplot_wordcloud(unigramdfm, max_words = 100)
-topfeatures(bigramdfm, 10)
-textplot_wordcloud(bigramdfm, max_words = 30)
-textplot_wordcloud(trigramdfm, max_words = 30)
-textplot_wordcloud(quadgramdfm, max_words = 30)
+```{r, echo = FALSE}
+printBarPlot <- function(dfm, topN = 10, mainTitle = "Top 10 Features")
+{
+  topFeatures <- topfeatures(dfm, topN)
+  barplot(height = topFeatures, xlab = "ngram", ylab = "Count", horiz = TRUE, main = mainTitle)
+}
+
+printWordCloud <- function(dfm, maxWordCount)
+{
+  topFeatures <- topfeatures(dfm, maxWordCount)
+  wordcloud(words = names(topFeatures), freq = topFeatures, min.freq = 1, max.words = maxWordCount, random.order = FALSE, rot.per = 0.35, colors = brewer.pal(8, "Dark2"))
+}
 ```
 
-### 4 Approach
+#### 3.3.1 Unigram
+
+```{r, echo = FALSE}
+par(1, 2)
+printBarPlot(unigramdfm)
+printWordCloud(unigramdfm, 500)
+```
+
+#### 3.3.2 Bigram
+
+```{r, echo = FALSE}
+printBarPlot(bigramdfm)
+printWordCloud(bigramdfm, 100)
+```
+
+#### 3.3.3 Trigram
+
+```{r, echo = FALSE}
+printBarPlot(trigramdfm)
+printWordCloud(trigramdfm, 20)
+```
+
+#### 3.3.4 Quadgram
+
+```{r, echo = FALSE}
+printBarPlot(quadgramdfm)
+printWordCloud(quadgramdfm, 10)
+```
+
+## 4 Approach
+
+We will build a Shinny application which
+
+1. Katz's Back-off Model with Good-Turing Discounting for our text prediction model
+2. Due to limitation of the computing resources, the application will support up to quad-gram
+
+We will perform these steps when creating the prediction model:
+
+1. Separate the dataset in the training and testing set
+2. Use training dataset in the our model
+3. Use testing dataset to evaluate the performance of the model
+
+## Appendix
+
+### Environment
+
+```{r}
+sessionInfo()
+```
+
+### Reference
+
+Katz's Back-off Model
+https://en.wikipedia.org/wiki/Katz%27s_back-off_model
