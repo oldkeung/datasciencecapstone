@@ -12,13 +12,15 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## 1. Introduciton
 
-Due to the popularity of mobile devices in recent years, people has performed many daily activities, like email or social networking, in their mobile devices. There is increasing demand to improve the typing experience on the devices. 
+Due to the popularity of mobile devices in recent years, people has performed many daily activities, like email or social networking, in their mobile devices. There is increasing demand to improve the typing experience on the devices. Natural language processing
 
 SwiftKey builds a smart keyboard that makes it easier for people to type on their mobile devices. One cornerstone of their smart keyboard is predictive text models. 
 
-In this report, we will work on 
+In this report, we will load a data set provided by SwiftKey and cleanse the data. Then, we will generate n-gram and perform exploratory data analysis.
 
-Lastly, the approach 
+The data set is collected from publicly available sources by a web crawler. It includes corpora from personal blogs, newspaper and twitter.
+
+Lastly, we will present the approach that will be used to create the prediction model.
 
 ```{r, message = FALSE, warning = FALSE}
 library(quanteda)
@@ -62,7 +64,7 @@ close(twitterConn)
 ### 2.2 Sampling
 
 ```{r, echo = FALSE}
-intervalPercent <- 5
+intervalPercent <- 20
 ```
 
 Due to limitation of computing resources, we will only use `r intervalPercent`% of data to perform the exploratory analysis.
@@ -95,10 +97,10 @@ alldfm <- dfm(allCorpus)
 
 toks <- tokens(all, remove_punct = TRUE)
 
-unigramdfm <- dfm(tokens_ngrams(toks, n = 1))
-bigramdfm <- dfm(tokens_ngrams(toks, n = 2))
-trigramdfm <- dfm(tokens_ngrams(toks, n = 3))
-quadgramdfm <- dfm(tokens_ngrams(toks, n = 4))
+#unigramdfm <- dfm(tokens_ngrams(toks, n = 1))
+#bigramdfm <- dfm(tokens_ngrams(toks, n = 2))
+#trigramdfm <- dfm(tokens_ngrams(toks, n = 3))
+#quadgramdfm <- dfm(tokens_ngrams(toks, n = 4))
 #removefeatures(bigramdfm, "in")
 ```
 
@@ -108,15 +110,10 @@ quadgramdfm <- dfm(tokens_ngrams(toks, n = 4))
 For the purpose of prediction, we will remove stop words from the data set which are not useful for our prediction
 
 ```{r "Stop Words", cache=TRUE}
-nfeat(quadgramdfm)
-head(toks)
 toks <- tokens_remove(toks, stopwords('en'), padding = TRUE)
-head(toks)
-
-quadgramdfm <- dfm(tokens_ngrams(toks, n = 4))
-
-nfeat(quadgramdfm)
 ```
+
+#### 2.4.2 Bad Words
 
 ```{r "Bad Words", cache=TRUE}
 badWordUrl <- "https://www.freewebheaders.com/wordpress/wp-content/uploads/full-list-of-bad-words-text-file_2018_03_26_26.zip"
@@ -137,13 +134,10 @@ close(badWordConn)
 ```
 
 ```{r}
-
-#badWord
-#nfeat(alldfm)
-#nfeat(dfm_select(alldfm, "shxt", selection = 'remove'))
+toks <- tokens_remove(toks, badWord, padding = TRUE)
 ```
 
-### 2.5 n-grams
+### 2.5 Generate n-grams
 
 After the data is cleansed, we will generate the n-grams:
 
@@ -155,6 +149,12 @@ quadgramdfm <- dfm(tokens_ngrams(toks, n = 4))
 ```
 
 ## 3. Data Summary
+
+```{r}
+head(blog)
+head(news)
+head(twitter)
+```
 
 ### 3.1 Word Count
 
@@ -175,7 +175,7 @@ Twitter | `r twitterCount`
 ### 3.3 Features
 
 ```{r, echo = FALSE}
-printBarPlot <- function(dfm, topN = 10, mainTitle = "Top 10 Features")
+printBarPlot <- function(dfm, topN = 20, mainTitle = "Top 20 Features")
 {
   topFeatures <- sort(topfeatures(dfm, topN), decreasing = FALSE)
   barplot(height = topFeatures, xlab = "Count", main = mainTitle, horiz = TRUE, las = 1, col = brewer.pal(8, "Dark2"))
@@ -184,10 +184,10 @@ printBarPlot <- function(dfm, topN = 10, mainTitle = "Top 10 Features")
   #  coord_flip()
 }
 
-printWordCloud <- function(dfm, maxWordCount)
+printWordCloud <- function(dfm, maxWordCount, scale = c(4, .5))
 {
   topFeatures <- topfeatures(dfm, maxWordCount)
-  wordcloud(words = names(topFeatures), freq = topFeatures, max.words = maxWordCount, random.order = FALSE, rot.per = 0.35, colors = brewer.pal(8, "Dark2"))
+  wordcloud(words = names(topFeatures), freq = topFeatures, max.words = maxWordCount, random.order = FALSE, rot.per = 0.35, scale = scale, colors = brewer.pal(8, "Dark2"))
 }
 ```
 
@@ -196,7 +196,7 @@ printWordCloud <- function(dfm, maxWordCount)
 ```{r, echo = FALSE}
 #par(mfrow = c(1, 2))
 printBarPlot(unigramdfm)
-printWordCloud(unigramdfm, 300)
+printWordCloud(unigramdfm, 100)
 ```
 
 #### 3.3.2 Bigram
@@ -220,7 +220,7 @@ printWordCloud(trigramdfm, 20)
 ```{r, echo = FALSE}
 #par(mfrow = c(1, 2))
 printBarPlot(quadgramdfm)
-printWordCloud(quadgramdfm, 10)
+printWordCloud(quadgramdfm, 10, c(2, 0.25))
 ```
 
 ## 4 Approach
@@ -243,4 +243,8 @@ We will perform these steps when creating the prediction model:
 
 ```{r}
 sessionInfo()
+```
+
+```{r}
+head(featnames(quadgramdfm), 10)
 ```
