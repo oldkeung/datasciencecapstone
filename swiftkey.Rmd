@@ -7,10 +7,18 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_chunk$set(cache = TRUE)
+#knitr::opts_chunk$set(cache = TRUE)
 ```
 
 ## 1. Introduciton
+
+Due to the popularity of mobile devices in recent years, people has performed many daily activities, like email or social networking, in their mobile devices. There is increasing demand to improve the typing experience on the devices. 
+
+SwiftKey builds a smart keyboard that makes it easier for people to type on their mobile devices. One cornerstone of their smart keyboard is predictive text models. 
+
+In this report, we will work on 
+
+Lastly, the approach 
 
 ```{r, message = FALSE, warning = FALSE}
 library(quanteda)
@@ -23,7 +31,9 @@ library(ggplot2)
 
 ## 2. Getting and Cleansing Data
 
-### 2.1 Loading Data
+### 2.1 Data Loading
+
+Firstly, we will load the data 
 
 ```{r, cache=TRUE}
 url <- "https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip"
@@ -51,13 +61,13 @@ close(twitterConn)
 
 ### 2.2 Sampling
 
-```{r}
+```{r, echo = FALSE}
 intervalPercent <- 5
 ```
 
 Due to limitation of computing resources, we will only use `r intervalPercent`% of data to perform the exploratory analysis.
 
-```{r Sampling}
+```{r "Sampling", cache = TRUE}
 set.seed(88888)
 
 blogWordCount <- sum(ntoken(blog))
@@ -75,10 +85,11 @@ twitterSample <- twitter[rbinom(twitterCount, 1, intervalPercent / 100) == 1]
 
 ### 2.3 Tokenization 
 
-```{r}
+```{r "Tokenization", cache = TRUE}
 all <- c(blogSample, newsSample, twitterSample)
 
 allCorpus <- corpus(all)
+alldfm <- dfm(allCorpus)
 
 #samplesdfm <- dfm(allCorpus, toLower = TRUE, removeNumbers = TRUE, removePunct = TRUE, removeTwitter = TRUE, ignoredFeatures = stopwords("english"), stem = TRUE)
 
@@ -91,9 +102,23 @@ quadgramdfm <- dfm(tokens_ngrams(toks, n = 4))
 #removefeatures(bigramdfm, "in")
 ```
 
-### 2.4 Profanity filtering
+#### 2.4.1 Stop Words
 
-```{r, cache=TRUE}
+[Stop words](https://en.wikipedia.org/wiki/Stop_words) (e.g. in, the ) are words and they are not useful for the prediction
+For the purpose of prediction, we will remove stop words from the data set which are not useful for our prediction
+
+```{r "Stop Words", cache=TRUE}
+nfeat(quadgramdfm)
+head(toks)
+toks <- tokens_remove(toks, stopwords('en'), padding = TRUE)
+head(toks)
+
+quadgramdfm <- dfm(tokens_ngrams(toks, n = 4))
+
+nfeat(quadgramdfm)
+```
+
+```{r "Bad Words", cache=TRUE}
 badWordUrl <- "https://www.freewebheaders.com/wordpress/wp-content/uploads/full-list-of-bad-words-text-file_2018_03_26_26.zip"
 badWordzipfile <- "full-list-of-bad-words-text-file.zip"
 ```
@@ -109,6 +134,24 @@ badWordConn <- file("full-list-of-bad-words-text-file_2018_03_26.txt", "r")
 badWord <- readLines(badWordConn, 1000)
 
 close(badWordConn)
+```
+
+```{r}
+
+#badWord
+#nfeat(alldfm)
+#nfeat(dfm_select(alldfm, "shxt", selection = 'remove'))
+```
+
+### 2.5 n-grams
+
+After the data is cleansed, we will generate the n-grams:
+
+```{r, cache = TRUE}
+unigramdfm <- dfm(tokens_ngrams(toks, n = 1))
+bigramdfm <- dfm(tokens_ngrams(toks, n = 2))
+trigramdfm <- dfm(tokens_ngrams(toks, n = 3))
+quadgramdfm <- dfm(tokens_ngrams(toks, n = 4))
 ```
 
 ## 3. Data Summary
@@ -134,9 +177,9 @@ Twitter | `r twitterCount`
 ```{r, echo = FALSE}
 printBarPlot <- function(dfm, topN = 10, mainTitle = "Top 10 Features")
 {
-  topFeatures <- rev(topfeatures(dfm, topN))
-  barplot(height = topFeatures, xlab = "ngram", ylab = "Count", main = mainTitle, horiz = TRUE, las = 1)
-  #ggplot(data = topFeatures, aes(x = topFeatures, y = $names)) +
+  topFeatures <- sort(topfeatures(dfm, topN), decreasing = FALSE)
+  barplot(height = topFeatures, xlab = "Count", main = mainTitle, horiz = TRUE, las = 1, col = brewer.pal(8, "Dark2"))
+  #ggplot(aes(x = c(1,2,3), y = c("1", "2", "3"))) +
   #  geom_bar(stat="identity") + 
   #  coord_flip()
 }
@@ -144,22 +187,22 @@ printBarPlot <- function(dfm, topN = 10, mainTitle = "Top 10 Features")
 printWordCloud <- function(dfm, maxWordCount)
 {
   topFeatures <- topfeatures(dfm, maxWordCount)
-  wordcloud(words = names(topFeatures), freq = topFeatures, min.freq = 1, max.words = maxWordCount, random.order = FALSE, rot.per = 0.35, colors = brewer.pal(8, "Dark2"))
+  wordcloud(words = names(topFeatures), freq = topFeatures, max.words = maxWordCount, random.order = FALSE, rot.per = 0.35, colors = brewer.pal(8, "Dark2"))
 }
 ```
 
 #### 3.3.1 Unigram
 
 ```{r, echo = FALSE}
-par(mfrow = c(1, 2))
+#par(mfrow = c(1, 2))
 printBarPlot(unigramdfm)
-printWordCloud(unigramdfm, 500)
+printWordCloud(unigramdfm, 300)
 ```
 
 #### 3.3.2 Bigram
 
 ```{r, echo = FALSE}
-par(mfrow = c(1, 2))
+#par(mfrow = c(1, 2))
 printBarPlot(bigramdfm)
 printWordCloud(bigramdfm, 100)
 ```
@@ -167,7 +210,7 @@ printWordCloud(bigramdfm, 100)
 #### 3.3.3 Trigram
 
 ```{r, echo = FALSE}
-par(mfrow = c(1, 2))
+#par(mfrow = c(1, 2))
 printBarPlot(trigramdfm)
 printWordCloud(trigramdfm, 20)
 ```
@@ -175,7 +218,7 @@ printWordCloud(trigramdfm, 20)
 #### 3.3.4 Quadgram
 
 ```{r, echo = FALSE}
-par(mfrow = c(1, 2))
+#par(mfrow = c(1, 2))
 printBarPlot(quadgramdfm)
 printWordCloud(quadgramdfm, 10)
 ```
@@ -184,14 +227,15 @@ printWordCloud(quadgramdfm, 10)
 
 We will build a Shinny application which
 
-1. Katz's Back-off Model with Good-Turing Discounting for our text prediction model
+1. Use [Katz's Back-off Model](https://en.wikipedia.org/wiki/Katz%27s_back-off_model) with Good-Turing Discounting for our text prediction model
 2. Due to limitation of the computing resources, the application will support up to quad-gram
 
 We will perform these steps when creating the prediction model:
 
-1. Separate the dataset in the training and testing set
-2. Use training dataset in the our model
-3. Use testing dataset to evaluate the performance of the model
+1. Data Cleansing includes Removing stop words and bad words which are irrelevant for our prediction model
+2. Separate the dataset into training and testing set
+3. Use training dataset in the our model
+4. Use testing dataset to evaluate the performance of the model
 
 ## Appendix
 
@@ -200,8 +244,3 @@ We will perform these steps when creating the prediction model:
 ```{r}
 sessionInfo()
 ```
-
-### Reference
-
-Katz's Back-off Model
-https://en.wikipedia.org/wiki/Katz%27s_back-off_model
