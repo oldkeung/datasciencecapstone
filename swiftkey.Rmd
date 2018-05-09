@@ -24,8 +24,9 @@ Lastly, we will present the approach that will be used to create the prediction 
 
 ```{r, message = FALSE, warning = FALSE}
 library(quanteda)
-library(markovchain)
+#library(markovchain)
 library(textcat)
+library(stringi)
 library(wordcloud)
 library(RColorBrewer)
 library(ggplot2)
@@ -52,9 +53,9 @@ blogConn <- file("final/en_US/en_US.blogs.txt", "r")
 newsConn <- file("final/en_US/en_US.news.txt", "r") 
 twitterConn <- file("final/en_US/en_US.twitter.txt", "r") 
 
-blog <- readLines(blogConn)
-news <- readLines(newsConn)
-twitter <- readLines(twitterConn)
+blog <- readLines(blogConn, skipNul = TRUE, encoding="UTF-8")
+news <- readLines(newsConn, skipNul = TRUE, encoding="UTF-8")
+twitter <- readLines(twitterConn, skipNul = TRUE, encoding="UTF-8")
 
 close(blogConn)
 close(newsConn)
@@ -64,7 +65,7 @@ close(twitterConn)
 ### 2.2 Sampling
 
 ```{r, echo = FALSE}
-intervalPercent <- 20
+intervalPercent <- 5
 ```
 
 Due to limitation of computing resources, we will only use `r intervalPercent`% of data to perform the exploratory analysis.
@@ -72,20 +73,36 @@ Due to limitation of computing resources, we will only use `r intervalPercent`% 
 ```{r "Sampling", cache = TRUE}
 set.seed(88888)
 
-blogWordCount <- sum(ntoken(blog))
-newsWordCount <- sum(ntoken(news))
-twitterWordCount <- sum(ntoken(twitter))
+blogWordCount <- sum(stri_count_words(blog))
+newsWordCount <- sum(stri_count_words(news))
+twitterWordCount <- sum(stri_count_words(twitter))
 
-blogCount <- length(blog)
-newsCount <- length(news)
-twitterCount <- length(twitter)
+blogLineCount <- length(blog)
+newsLineCount <- length(news)
+twitterLineCount <- length(twitter)
 
-blogSample <- blog[rbinom(blogCount, 1, intervalPercent / 100) == 1]
-newsSample <- news[rbinom(newsCount, 1, intervalPercent / 100) == 1]
-twitterSample <- twitter[rbinom(twitterCount, 1, intervalPercent / 100) == 1]
+blogSample <- blog[rbinom(blogLineCount, 1, intervalPercent / 100) == 1]
+newsSample <- news[rbinom(newsLineCount, 1, intervalPercent / 100) == 1]
+twitterSample <- twitter[rbinom(twitterLineCount, 1, intervalPercent / 100) == 1]
 ```
 
-### 2.3 Tokenization 
+### 2.3 Invalid Character
+
+```{r}
+#blogSample <- gsub("itâ", "it'", blogSample)
+#newsSample <- gsub("itâ", "it'", newsSample)
+#twitterSample <- gsub("itâ", "it'", twitterSample)
+
+#blogSample <- gsub("iâ", "i'", blogSample)
+#newsSample <- gsub("iâ", "i'", newsSample)
+#twitterSample <- gsub("iâ", "i'", twitterSample)
+
+#blogSample <- gsub("donâ", "don'", blogSample)
+#newsSample <- gsub("donâ", "don'", newsSample)
+#twitterSample <- gsub("donâ", "don'", twitterSample)
+```
+
+### 2.4 Tokenization 
 
 ```{r "Tokenization", cache = TRUE}
 all <- c(blogSample, newsSample, twitterSample)
@@ -95,45 +112,43 @@ alldfm <- dfm(allCorpus)
 
 #samplesdfm <- dfm(allCorpus, toLower = TRUE, removeNumbers = TRUE, removePunct = TRUE, removeTwitter = TRUE, ignoredFeatures = stopwords("english"), stem = TRUE)
 
-toks <- tokens(all, remove_punct = TRUE)
-
-#unigramdfm <- dfm(tokens_ngrams(toks, n = 1))
-#bigramdfm <- dfm(tokens_ngrams(toks, n = 2))
-#trigramdfm <- dfm(tokens_ngrams(toks, n = 3))
-#quadgramdfm <- dfm(tokens_ngrams(toks, n = 4))
-#removefeatures(bigramdfm, "in")
+toks <- tokens(all, toLower = TRUE, remove_punct = TRUE, remove_symbols = TRUE, remove_twitter = TRUE)
 ```
+
+### 2.4 Profanity Filtering
 
 #### 2.4.1 Stop Words
 
 [Stop words](https://en.wikipedia.org/wiki/Stop_words) (e.g. in, the ) are words and they are not useful for the prediction
 For the purpose of prediction, we will remove stop words from the data set which are not useful for our prediction
 
-```{r "Stop Words", cache=TRUE}
+```{r "Stop Words", cache = TRUE}
 toks <- tokens_remove(toks, stopwords('en'), padding = TRUE)
 ```
 
 #### 2.4.2 Bad Words
 
-```{r "Bad Words", cache=TRUE}
+Bad words are 
+
+```{r "Bad Words", cache = TRUE}
 badWordUrl <- "https://www.freewebheaders.com/wordpress/wp-content/uploads/full-list-of-bad-words-text-file_2018_03_26_26.zip"
 badWordzipfile <- "full-list-of-bad-words-text-file.zip"
 ```
 
-```{r "Download Bad Words Data", cache=TRUE}
+```{r "Download Bad Words Data", cache = TRUE}
 download.file(badWordUrl, destfile = badWordzipfile)
 unzip(badWordzipfile, exdir = ".")
 ```
 
-```{r, cache=TRUE}
+```{r, cache = TRUE}
 badWordConn <- file("full-list-of-bad-words-text-file_2018_03_26.txt", "r") 
 
-badWord <- readLines(badWordConn, 1000)
+badWord <- readLines(badWordConn)
 
 close(badWordConn)
 ```
 
-```{r}
+```{r, cache = TRUE}
 toks <- tokens_remove(toks, badWord, padding = TRUE)
 ```
 
@@ -148,40 +163,30 @@ trigramdfm <- dfm(tokens_ngrams(toks, n = 3))
 quadgramdfm <- dfm(tokens_ngrams(toks, n = 4))
 ```
 
-## 3. Data Summary
+## 3. Exploratory Data Analysis
 
-```{r}
-head(blog)
-head(news)
-head(twitter)
-```
+### 3.1 Summary
 
-### 3.1 Word Count
+Data Source | Lines Count | Word Count
+---|---|---
+Blog | `r blogLineCount` | `r blogWordCount`
+News | `r newsLineCount` | `r newsWordCount`
+Twitter | `r twitterLineCount` | `r twitterWordCount`
 
-Data Source | Word Counts
----|---
-Blog | `r blogWordCount`
-News | `r newsWordCount`
-Twitter | `r twitterWordCount`
-
-### 3.2 Line Count
-
-Data Source | Line Counts
----|---
-Blog | `r blogCount`
-News | `r newsCount`
-Twitter | `r twitterCount`
-
-### 3.3 Features
+### 3.2 Features
 
 ```{r, echo = FALSE}
 printBarPlot <- function(dfm, topN = 20, mainTitle = "Top 20 Features")
 {
-  topFeatures <- sort(topfeatures(dfm, topN), decreasing = FALSE)
-  barplot(height = topFeatures, xlab = "Count", main = mainTitle, horiz = TRUE, las = 1, col = brewer.pal(8, "Dark2"))
-  #ggplot(aes(x = c(1,2,3), y = c("1", "2", "3"))) +
-  #  geom_bar(stat="identity") + 
-  #  coord_flip()
+  
+  topFeatures <- textstat_frequency(dfm, n = topN)
+  topFeatures$feature <- with(topFeatures, reorder(feature, +frequency))
+  
+  #barplot(height = topFeatures, xlab = "Count", main = mainTitle, horiz = TRUE, las = 1, col = brewer.pal(8, "Dark2"))
+  ggplot(topFeatures, aes(x = feature, y = frequency)) +
+    geom_bar(stat="identity") + 
+    scale_fill_brewer(palette = "Blues") +
+    coord_flip()
 }
 
 printWordCloud <- function(dfm, maxWordCount, scale = c(4, .5))
@@ -191,36 +196,36 @@ printWordCloud <- function(dfm, maxWordCount, scale = c(4, .5))
 }
 ```
 
-#### 3.3.1 Unigram
+#### 3.2.1 Unigram
 
-```{r, echo = FALSE}
+```{r "Unigram", echo = FALSE}
 #par(mfrow = c(1, 2))
 printBarPlot(unigramdfm)
 printWordCloud(unigramdfm, 100)
 ```
 
-#### 3.3.2 Bigram
+#### 3.2.2 Bigram
 
-```{r, echo = FALSE}
+```{r "Bigram", echo = FALSE}
 #par(mfrow = c(1, 2))
 printBarPlot(bigramdfm)
 printWordCloud(bigramdfm, 100)
 ```
 
-#### 3.3.3 Trigram
+#### 3.2.3 Trigram
 
-```{r, echo = FALSE}
+```{r "Trigram", echo = FALSE}
 #par(mfrow = c(1, 2))
 printBarPlot(trigramdfm)
 printWordCloud(trigramdfm, 20)
 ```
 
-#### 3.3.4 Quadgram
+#### 3.2.4 Quadgram
 
-```{r, echo = FALSE}
+```{r "Quadgram", echo = FALSE}
 #par(mfrow = c(1, 2))
 printBarPlot(quadgramdfm)
-printWordCloud(quadgramdfm, 10, c(2, 0.25))
+printWordCloud(quadgramdfm, 10)
 ```
 
 ## 4 Approach
@@ -246,5 +251,14 @@ sessionInfo()
 ```
 
 ```{r}
-head(featnames(quadgramdfm), 10)
+#library("plyr")
+#a <- unlist(strsplit(stri_replace_last(featnames(quadgramdfm), " ", fixed = "_"), " ", #fixed = TRUE))
+#a <- ldply(a)
+#head(a, 100)
+bi <- textstat_frequency(bigramdfm)
+tri <- textstat_frequency(trigramdfm)
+quad <- textstat_frequency(quadgramdfm)
+save(bi, tri, quad, file = "freq.rda")
+
+tria <- tri %>% transform(first_term = sub("(.*)_(.*)", "\\1", feature), second_term = sub("(.*)_(.*)", "\\2", feature)) %>% select(first_term, second_term, frequen
 ```

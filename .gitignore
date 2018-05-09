@@ -31,3 +31,4 @@ swiftkey_cache
 swiftkey_files
 /swiftkey.html
 .RDataTmp
+*.rda
