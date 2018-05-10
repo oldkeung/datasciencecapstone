@@ -44,8 +44,8 @@ zipfile <- "Coursera-SwiftKey.zip"
 ```
 
 ```{r "Download Data", cache=TRUE}
-download.file(url, destfile = zipfile)
-unzip(zipfile, exdir = ".")
+#download.file(url, destfile = zipfile)
+#unzip(zipfile, exdir = ".")
 ```
 
 ```{r "Load Data", cache=TRUE}
@@ -65,7 +65,7 @@ close(twitterConn)
 ### 2.2 Sampling
 
 ```{r, echo = FALSE}
-intervalPercent <- 5
+intervalPercent <- 40
 ```
 
 Due to limitation of computing resources, we will only use `r intervalPercent`% of data to perform the exploratory analysis.
@@ -100,6 +100,9 @@ twitterSample <- twitter[rbinom(twitterLineCount, 1, intervalPercent / 100) == 1
 #blogSample <- gsub("donâ", "don'", blogSample)
 #newsSample <- gsub("donâ", "don'", newsSample)
 #twitterSample <- gsub("donâ", "don'", twitterSample)
+blogSample  <- iconv(blogSample, from = "latin1", to = "ASCII", sub="")
+newsSample  <- iconv(newsSample, from = "latin1", to = "ASCII", sub="")
+twitterSample  <- iconv(twitterSample, from = "latin1", to = "ASCII", sub="")
 ```
 
 ### 2.4 Tokenization 
@@ -112,7 +115,7 @@ alldfm <- dfm(allCorpus)
 
 #samplesdfm <- dfm(allCorpus, toLower = TRUE, removeNumbers = TRUE, removePunct = TRUE, removeTwitter = TRUE, ignoredFeatures = stopwords("english"), stem = TRUE)
 
-toks <- tokens(all, toLower = TRUE, remove_punct = TRUE, remove_symbols = TRUE, remove_twitter = TRUE)
+toks <- tokens(all, toLower = TRUE, remove_punct = TRUE, remove_symbols = TRUE, remove_twitter = TRUE, remove_numbers = TRUE)
 ```
 
 ### 2.4 Profanity Filtering
@@ -251,14 +254,15 @@ sessionInfo()
 ```
 
 ```{r}
-#library("plyr")
-#a <- unlist(strsplit(stri_replace_last(featnames(quadgramdfm), " ", fixed = "_"), " ", #fixed = TRUE))
-#a <- ldply(a)
-#head(a, 100)
+library(dplyr)
+
 bi <- textstat_frequency(bigramdfm)
 tri <- textstat_frequency(trigramdfm)
 quad <- textstat_frequency(quadgramdfm)
-save(bi, tri, quad, file = "freq.rda")
 
-tria <- tri %>% transform(first_term = sub("(.*)_(.*)", "\\1", feature), second_term = sub("(.*)_(.*)", "\\2", feature)) %>% select(first_term, second_term, frequen
+bi_dt <- bi %>% transform(first_term = sub("(.*)_(.*)", "\\1", feature), second_term = sub("(.*)_(.*)", "\\2", feature)) %>% select(first_term, second_term, frequency) 
+tri_dt <- tri %>% transform(first_term = sub("(.*)_(.*)", "\\1", feature), second_term = sub("(.*)_(.*)", "\\2", feature)) %>% select(first_term, second_term, frequency) 
+quad_dt <- quad %>% transform(first_term = sub("(.*)_(.*)", "\\1", feature), second_term = sub("(.*)_(.*)", "\\2", feature)) %>% select(first_term, second_term, frequency) 
+
+save(bi_dt, tri_dt, quad_dt, file = "freq.rds")
 ```
