@@ -10,22 +10,18 @@ knitr::opts_chunk$set(echo = TRUE)
 #knitr::opts_chunk$set(cache = TRUE)
 ```
 
-## 1. Introduciton
+## 1. Introduction
 
-Due to the popularity of mobile devices in recent years, people has performed many daily activities, like email or social networking, in their mobile devices. There is increasing demand to improve the typing experience on the devices. Natural language processing
+Due to the popularity of mobile devices in recent years, people has performed many daily activities, like email or social networking, in their mobile devices. There is increasing demand to improve the typing experience on the devices. SwiftKey builds a smart keyboard that makes it easier for people to type on their mobile devices. One cornerstone of their smart keyboard is predictive text models. 
 
-SwiftKey builds a smart keyboard that makes it easier for people to type on their mobile devices. One cornerstone of their smart keyboard is predictive text models. 
+In this report, we will load the corpus provided collected from publicly available sources by a web crawler. Then, we will clean the data and generate n-gram to perform exploratory data analysis. The n-gram will form the training and testing dataset to build our prediction text model.
 
-In this report, we will load a data set provided by SwiftKey and cleanse the data. Then, we will generate n-gram and perform exploratory data analysis.
-
-The data set is collected from publicly available sources by a web crawler. It includes corpora from personal blogs, newspaper and twitter.
-
-Lastly, we will present the approach that will be used to create the prediction model.
+At the end of the report, we will present the approach that will be used to create the prediction model.
 
 ```{r, message = FALSE, warning = FALSE}
 library(quanteda)
 #library(markovchain)
-library(textcat)
+#library(textcat)
 library(stringi)
 library(wordcloud)
 library(RColorBrewer)
@@ -36,19 +32,14 @@ library(ggplot2)
 
 ### 2.1 Data Loading
 
-Firstly, we will load the data 
-
-```{r, cache=TRUE}
-url <- "https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip"
-zipfile <- "Coursera-SwiftKey.zip"
-```
-
-```{r "Download Data", cache=TRUE}
-#download.file(url, destfile = zipfile)
-#unzip(zipfile, exdir = ".")
-```
+Firstly, we will load the data corpus
 
 ```{r "Load Data", cache=TRUE}
+url <- "https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip"
+zipfile <- "Coursera-SwiftKey.zip"
+
+#download.file(url, destfile = zipfile)
+#unzip(zipfile, exdir = ".")
 blogConn <- file("final/en_US/en_US.blogs.txt", "r") 
 newsConn <- file("final/en_US/en_US.news.txt", "r") 
 twitterConn <- file("final/en_US/en_US.twitter.txt", "r") 
@@ -65,10 +56,10 @@ close(twitterConn)
 ### 2.2 Sampling
 
 ```{r, echo = FALSE}
-intervalPercent <- 40
+intervalPercent <- 10
 ```
 
-Due to limitation of computing resources, we will only use `r intervalPercent`% of data to perform the exploratory analysis.
+Due to limitation of computing resources, we will only use `r intervalPercent`% of data to generate the n-gram and perform exploratory data analysis.
 
 ```{r "Sampling", cache = TRUE}
 set.seed(88888)
@@ -88,24 +79,24 @@ twitterSample <- twitter[rbinom(twitterLineCount, 1, intervalPercent / 100) == 1
 
 ### 2.3 Invalid Character
 
+We will remove non-ASCII characters that are not useful for our prediction model.
+
 ```{r}
-#blogSample <- gsub("itâ", "it'", blogSample)
-#newsSample <- gsub("itâ", "it'", newsSample)
-#twitterSample <- gsub("itâ", "it'", twitterSample)
-
-#blogSample <- gsub("iâ", "i'", blogSample)
-#newsSample <- gsub("iâ", "i'", newsSample)
-#twitterSample <- gsub("iâ", "i'", twitterSample)
-
-#blogSample <- gsub("donâ", "don'", blogSample)
-#newsSample <- gsub("donâ", "don'", newsSample)
-#twitterSample <- gsub("donâ", "don'", twitterSample)
 blogSample  <- iconv(blogSample, from = "latin1", to = "ASCII", sub="")
 newsSample  <- iconv(newsSample, from = "latin1", to = "ASCII", sub="")
 twitterSample  <- iconv(twitterSample, from = "latin1", to = "ASCII", sub="")
 ```
 
 ### 2.4 Tokenization 
+
+We will now tokenize the corpus. During the tokenization process, we will also perform the following:
+
+1. Change all text to lower case
+2. Remove puntuation
+3. Remove symbols
+4. Remove twitter symbols (hashtag #)
+5. Remove numbers
+6. Stem the words
 
 ```{r "Tokenization", cache = TRUE}
 all <- c(blogSample, newsSample, twitterSample)
@@ -115,15 +106,16 @@ alldfm <- dfm(allCorpus)
 
 #samplesdfm <- dfm(allCorpus, toLower = TRUE, removeNumbers = TRUE, removePunct = TRUE, removeTwitter = TRUE, ignoredFeatures = stopwords("english"), stem = TRUE)
 
-toks <- tokens(all, toLower = TRUE, remove_punct = TRUE, remove_symbols = TRUE, remove_twitter = TRUE, remove_numbers = TRUE)
+toks <- tokens(all, to_lower = TRUE, remove_punct = TRUE, remove_symbols = TRUE, remove_twitter = TRUE, remove_numbers = TRUE)
+
+toks <- tokens_wordstem(toks, language = quanteda_options("language_stemmer"))
 ```
 
 ### 2.4 Profanity Filtering
 
 #### 2.4.1 Stop Words
 
-[Stop words](https://en.wikipedia.org/wiki/Stop_words) (e.g. in, the ) are words and they are not useful for the prediction
-For the purpose of prediction, we will remove stop words from the data set which are not useful for our prediction
+"[Stop words](https://en.wikipedia.org/wiki/Stop_words) (e.g. in, the) are words which are filtered out before or after processing of natural language data (text).". We will remove stop words from the data set which are not useful for our prediction.
 
 ```{r "Stop Words", cache = TRUE}
 toks <- tokens_remove(toks, stopwords('en'), padding = TRUE)
@@ -131,19 +123,14 @@ toks <- tokens_remove(toks, stopwords('en'), padding = TRUE)
 
 #### 2.4.2 Bad Words
 
-Bad words are 
+Bad words include those words that are not appropriate to predict. We will use a list of google bad words to filter them our from the corpus.
 
-```{r "Bad Words", cache = TRUE}
+```{r "Load Bad Words", cache = TRUE}
 badWordUrl <- "https://www.freewebheaders.com/wordpress/wp-content/uploads/full-list-of-bad-words-text-file_2018_03_26_26.zip"
 badWordzipfile <- "full-list-of-bad-words-text-file.zip"
-```
 
-```{r "Download Bad Words Data", cache = TRUE}
 download.file(badWordUrl, destfile = badWordzipfile)
 unzip(badWordzipfile, exdir = ".")
-```
-
-```{r, cache = TRUE}
 badWordConn <- file("full-list-of-bad-words-text-file_2018_03_26.txt", "r") 
 
 badWord <- readLines(badWordConn)
@@ -163,7 +150,6 @@ After the data is cleansed, we will generate the n-grams:
 unigramdfm <- dfm(tokens_ngrams(toks, n = 1))
 bigramdfm <- dfm(tokens_ngrams(toks, n = 2))
 trigramdfm <- dfm(tokens_ngrams(toks, n = 3))
-quadgramdfm <- dfm(tokens_ngrams(toks, n = 4))
 ```
 
 ## 3. Exploratory Data Analysis
@@ -186,9 +172,9 @@ printBarPlot <- function(dfm, topN = 20, mainTitle = "Top 20 Features")
   topFeatures$feature <- with(topFeatures, reorder(feature, +frequency))
   
   #barplot(height = topFeatures, xlab = "Count", main = mainTitle, horiz = TRUE, las = 1, col = brewer.pal(8, "Dark2"))
-  ggplot(topFeatures, aes(x = feature, y = frequency)) +
+  ggplot(topFeatures, aes(x = feature, y = frequency, fill = feature)) +
     geom_bar(stat="identity") + 
-    scale_fill_brewer(palette = "Blues") +
+    scale_fill_brewer(palette = colorRampPalette(brewer.pal(9,"Blues"))(topN)) +
     coord_flip()
 }
 
@@ -223,20 +209,16 @@ printBarPlot(trigramdfm)
 printWordCloud(trigramdfm, 20)
 ```
 
-#### 3.2.4 Quadgram
-
-```{r "Quadgram", echo = FALSE}
-#par(mfrow = c(1, 2))
-printBarPlot(quadgramdfm)
-printWordCloud(quadgramdfm, 10)
-```
-
 ## 4 Approach
+
+### 4.1 Preidction Model
 
 We will build a Shinny application which
 
 1. Use [Katz's Back-off Model](https://en.wikipedia.org/wiki/Katz%27s_back-off_model) with Good-Turing Discounting for our text prediction model
-2. Due to limitation of the computing resources, the application will support up to quad-gram
+2. Due to limitation of the computing resources, the application will support up to trigram
+
+### 4.1 Steps
 
 We will perform these steps when creating the prediction model:
 
@@ -258,11 +240,11 @@ library(dplyr)
 
 bi <- textstat_frequency(bigramdfm)
 tri <- textstat_frequency(trigramdfm)
-quad <- textstat_frequency(quadgramdfm)
+#quad <- textstat_frequency(quadgramdfm)
 
 bi_dt <- bi %>% transform(first_term = sub("(.*)_(.*)", "\\1", feature), second_term = sub("(.*)_(.*)", "\\2", feature)) %>% select(first_term, second_term, frequency) 
 tri_dt <- tri %>% transform(first_term = sub("(.*)_(.*)", "\\1", feature), second_term = sub("(.*)_(.*)", "\\2", feature)) %>% select(first_term, second_term, frequency) 
-quad_dt <- quad %>% transform(first_term = sub("(.*)_(.*)", "\\1", feature), second_term = sub("(.*)_(.*)", "\\2", feature)) %>% select(first_term, second_term, frequency) 
+#quad_dt <- quad %>% transform(first_term = sub("(.*)_(.*)", "\\1", feature), second_term = sub("(.*)_(.*)", "\\2", feature)) %>% select(first_term, second_term, frequency) 
 
-save(bi_dt, tri_dt, quad_dt, file = "freq.rds")
+save(bi_dt, tri_dt, file = "freq.rds")
 ```
