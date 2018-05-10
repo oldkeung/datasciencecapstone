@@ -32,7 +32,7 @@ library(ggplot2)
 
 ### 2.1 Data Loading
 
-Firstly, we will load the data corpus
+Firstly, we will download and load the corpus.
 
 ```{r "Load Data", cache=TRUE}
 url <- "https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip"
@@ -162,7 +162,22 @@ Blog | `r blogLineCount` | `r blogWordCount`
 News | `r newsLineCount` | `r newsWordCount`
 Twitter | `r twitterLineCount` | `r twitterWordCount`
 
+### 3.2 Data Sample
+
+```{r}
+head(blog)
+head(news)
+head(twitter)
+```
+
 ### 3.2 Features
+
+#### 3.2.1 Summary
+
+   | Unigram | Bigram | Trigram
+---|---|---|---
+Count | `r nfeat(unigramdfm)` | `r nfeat(bigramdfm)`| `r nfeat(trigramdfm)`
+Sample | `r head(featnames(unigramdfm))` | `r head(featnames(bigramdfm))` | `r head(featnames(trigramdfm))`
 
 ```{r, echo = FALSE}
 printBarPlot <- function(dfm, topN = 20, mainTitle = "Top 20 Features")
@@ -238,13 +253,15 @@ sessionInfo()
 ```{r}
 library(dplyr)
 
-bi <- textstat_frequency(bigramdfm)
-tri <- textstat_frequency(trigramdfm)
+uni <- textstat_frequency(unigramdfm) %>% select(feature, frequency)
+bi <- textstat_frequency(bigramdfm) %>% select(feature, frequency)
+tri <- textstat_frequency(trigramdfm) %>% select(feature, frequency)
 #quad <- textstat_frequency(quadgramdfm)
 
-bi_dt <- bi %>% transform(first_term = sub("(.*)_(.*)", "\\1", feature), second_term = sub("(.*)_(.*)", "\\2", feature)) %>% select(first_term, second_term, frequency) 
-tri_dt <- tri %>% transform(first_term = sub("(.*)_(.*)", "\\1", feature), second_term = sub("(.*)_(.*)", "\\2", feature)) %>% select(first_term, second_term, frequency) 
+#bi_dt <- bi %>% transform(first_term = sub("(.*)_(.*)", "\\1", feature), second_term = sub("(.*)_(.*)", "\\2", feature)) %>% select(first_term, second_term, frequency) 
+#tri_dt <- tri %>% transform(first_term = sub("(.*)_(.*)", "\\1", feature), second_term = sub("(.*)_(.*)", "\\2", feature)) %>% select(first_term, second_term, frequency) 
 #quad_dt <- quad %>% transform(first_term = sub("(.*)_(.*)", "\\1", feature), second_term = sub("(.*)_(.*)", "\\2", feature)) %>% select(first_term, second_term, frequency) 
 
-save(bi_dt, tri_dt, file = "freq.rds")
+#save(bi_dt, tri_dt, file = "freq.rds")
+save(uni, bi, tri, file = "freq.rds")
 ```
