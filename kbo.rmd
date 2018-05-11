@@ -47,8 +47,8 @@ filterTxt <- c("ears", "fingers", "toes", "eyes")
 q <- "Be grateful for the good times and keep the faith during the"
 filterTxt <- c("worse", "hard", "bad", "sad")
 # Q10
-q <- "If this isn't the cutest thing you've ever seen, then you must be"
-filterTxt <- c("callous", "asleep", "insane", "insensitive")
+#q <- "If this isn't the cutest thing you've ever seen, then you must be"
+#filterTxt <- c("callous", "asleep", "insane", "insensitive")
 
 toks <- tokens(q, to_lower = TRUE, remove_punct = TRUE, remove_symbols = TRUE, remove_twitter = TRUE, remove_numbers = TRUE)
 toks <- tokens_remove(toks, stopwords('en'))

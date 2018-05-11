@@ -24,6 +24,7 @@ library(stringi)
 library(wordcloud)
 library(RColorBrewer)
 library(ggplot2)
+library(dplyr)
 ```
 
 ## 2. Getting and Cleansing Data
@@ -54,7 +55,7 @@ close(twitterConn)
 ### 2.2 Sampling
 
 ```{r, echo = FALSE}
-intervalPercent <- 10
+intervalPercent <- 20
 ```
 
 Due to limitation of computing resources, we will only use `r intervalPercent`% of data to generate the n-gram and perform exploratory data analysis.
@@ -80,9 +81,9 @@ twitterSample <- twitter[rbinom(twitterLineCount, 1, intervalPercent / 100) == 1
 We will remove non-ASCII characters that are not useful for our prediction model.
 
 ```{r}
-blogSample  <- iconv(blogSample, from = "latin1", to = "ASCII", sub="")
-newsSample  <- iconv(newsSample, from = "latin1", to = "ASCII", sub="")
-twitterSample  <- iconv(twitterSample, from = "latin1", to = "ASCII", sub="")
+blogSample <- iconv(blogSample, from = "latin1", to = "ASCII", sub="")
+newsSample <- iconv(newsSample, from = "latin1", to = "ASCII", sub="")
+twitterSample <- iconv(twitterSample, from = "latin1", to = "ASCII", sub="")
 ```
 
 ### 2.4 Tokenization 
@@ -137,6 +138,7 @@ close(badWordConn)
 ```
 
 ```{r, cache = TRUE}
+head(toks)
 toks <- tokens_remove(toks, badWord, padding = TRUE)
 ```
 
@@ -226,15 +228,17 @@ printWordCloud(trigramdfm, 10)
 
 ## 4 Approach
 
-The prediction model will apply the [Katz's Back-off Model](https://en.wikipedia.org/wiki/Katz%27s_back-off_model) with Good-Turing Discounting. Due to limitation of the computing resources, the application will support up to trigram only.
+For now, we have our n-grams for building the prediction model. We will use [Katz's Back-off Model](https://en.wikipedia.org/wiki/Katz%27s_back-off_model) with Good-Turing Discounting for our prediction model. 
 
-These are steps to perform
+The complete steps for generating the prediction model is as follow:
 
-1. Data Cleansing includes Removing stop words and bad words which are irrelevant for our prediction model
-2. Separate the dataset into training and testing set
-3. Use training dataset in the our model
-4. Use testing dataset to evaluate the performance of the model
-5. Build a shiny application to implement the text prediction
+1. Download and load the corpus (Done already)
+2. Cleanse the data, including remove puntunaction, stop words, bad words, etc.  (Done already)
+3. Generate n-grams. Due to limitation of the computing resources, the application will support up to trigram only  (Done already)
+4. Separate the dataset into training and testing set
+5. Use training dataset in the our model
+6. Use testing dataset to evaluate the performance of the model
+7. Build a shiny application to implement the text prediction application
 
 ## Appendix
 
@@ -244,7 +248,7 @@ These are steps to perform
 sessionInfo()
 ```
 
-```{r}
+```{r, echo = FALSE}
 library(dplyr)
 
 uni <- textstat_frequency(unigramdfm) %>% select(ngram = feature, freq = frequency)
