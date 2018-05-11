@@ -19,34 +19,34 @@ library(quanteda)
 gamma2 <- 0.5  # bigram discount
 gamma3 <- 0.5  # trigram discount
 #bigPre <- 'happi_new'
-# Q1
+# Q1 (xcheese, beer)
 #q <- "The guy in front of me just bought a pound of bacon, a bouquet, and a case of"
 #filterTxt <- c("soda", "pretzels", "beer", "cheese")
-# Q2
+# Q2 (world)
 #q <- "The guy in front of me just bought a pound of bacon, a bouquet, and a case of"
 #filterTxt <- c("world", "universe", "best", "most")
-# Q3
+# Q3 (happiest)
 #q <- "Hey sunshine, can you follow me and make me the"
 #filterTxt <- c("happiest", "saddest", "smelliest", "bluest")
-# Q4
-q <- "Very early observations on the Bills game: Offense still struggling but the"
-filterTxt <- c("players", "referees", "defense", "crowd")
-# Q5
-q <- "Go on a romantic date at the"
-filterTxt <- c("grocery", "movies", "mall", "beach")
-# Q6
-q <- "Well I'm pretty sure my granny has some old bagpipes in her garage I'll dust them off and be on my"
-filterTxt <- c("way", "motorcycle", "horse", "phone")
-# Q7
+# Q4 (xplayers, defence)
+#q <- "Very early observations on the Bills game: Offense still struggling but the"
+#filterTxt <- c("players", "referees", "defense", "crowd")
+# Q5 (beach)
+#q <- "Go on a romantic date at the"
+#filterTxt <- c("grocery", "movies", "mall", "beach")
+# Q6 (way)
+#q <- "Well I'm pretty sure my granny has some old bagpipes in her garage I'll dust them off and be on my"
+#filterTxt <- c("way", "motorcycle", "horse", "phone")
+# Q7 (xyears, time)
 q <- "Ohhhhh #PointBreak is on tomorrow. Love that film and haven't seen it in quite some"
 filterTxt <- c("years", "thing", "time", "weeks")
-# Q8
-q <- "After the ice bucket challenge Louis will push his long wet hair out of his eyes with his little"
-filterTxt <- c("ears", "fingers", "toes", "eyes")
-# Q9
-q <- "Be grateful for the good times and keep the faith during the"
-filterTxt <- c("worse", "hard", "bad", "sad")
-# Q10
+# Q8 (fingers)
+#q <- "After the ice bucket challenge Louis will push his long wet hair out of his eyes with his little"
+#filterTxt <- c("ears", "fingers", "toes", "eyes")
+# Q9 (bad)
+#q <- "Be grateful for the good times and keep the faith during the"
+#filterTxt <- c("worse", "hard", "bad", "sad")
+# Q10 (insane)
 #q <- "If this isn't the cutest thing you've ever seen, then you must be"
 #filterTxt <- c("callous", "asleep", "insane", "insensitive")
 
@@ -57,7 +57,7 @@ bigPre <- paste(tok[length(tok) - 1], tok[length(tok)], sep = "_")
 ```
 
 ```{r "n-grams", cache = TRUE}
-load("freq.rds")
+load("freq50.rds")
 unigs <- uni
 bigrs <- bi
 trigs <- tri
