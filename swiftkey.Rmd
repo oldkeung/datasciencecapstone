@@ -14,14 +14,12 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Due to the popularity of mobile devices in recent years, people has performed many daily activities, like email or social networking, in their mobile devices. There is increasing demand to improve the typing experience on the devices. SwiftKey builds a smart keyboard that makes it easier for people to type on their mobile devices. One cornerstone of their smart keyboard is predictive text models. 
 
-In this report, we will load the corpus provided collected from publicly available sources by a web crawler. Then, we will clean the data and generate n-gram to perform exploratory data analysis. The n-gram will form the training and testing dataset to build our prediction text model.
+In this report, we will load a corpus collected from publicly available sources by a web crawler. Then, we will cleanse the data and generate n-gram to perform exploratory data analysis. The n-gram will use as the training and testing dataset to build our prediction text model.
 
 At the end of the report, we will present the approach that will be used to create the prediction model.
 
 ```{r, message = FALSE, warning = FALSE}
 library(quanteda)
-#library(markovchain)
-#library(textcat)
 library(stringi)
 library(wordcloud)
 library(RColorBrewer)
@@ -108,7 +106,7 @@ alldfm <- dfm(allCorpus)
 
 toks <- tokens(all, to_lower = TRUE, remove_punct = TRUE, remove_symbols = TRUE, remove_twitter = TRUE, remove_numbers = TRUE)
 
-toks <- tokens_wordstem(toks, language = quanteda_options("language_stemmer"))
+#toks <- tokens_wordstem(toks, language = quanteda_options("language_stemmer"))
 ```
 
 ### 2.4 Profanity Filtering
@@ -118,7 +116,7 @@ toks <- tokens_wordstem(toks, language = quanteda_options("language_stemmer"))
 "[Stop words](https://en.wikipedia.org/wiki/Stop_words) (e.g. in, the) are words which are filtered out before or after processing of natural language data (text).". We will remove stop words from the data set which are not useful for our prediction.
 
 ```{r "Stop Words", cache = TRUE}
-toks <- tokens_remove(toks, stopwords('en'), padding = TRUE)
+toks <- tokens_remove(toks, stopwords('en'))
 ```
 
 #### 2.4.2 Bad Words
@@ -154,7 +152,9 @@ trigramdfm <- dfm(tokens_ngrams(toks, n = 3))
 
 ## 3. Exploratory Data Analysis
 
-### 3.1 Summary
+### 3.1 Raw Data File
+
+#### 3.1.1 Summary
 
 Data Source | Lines Count | Word Count
 ---|---|---
@@ -162,7 +162,7 @@ Blog | `r blogLineCount` | `r blogWordCount`
 News | `r newsLineCount` | `r newsWordCount`
 Twitter | `r twitterLineCount` | `r twitterWordCount`
 
-### 3.2 Data Sample
+### 3.1.2 Data Sample
 
 ```{r}
 head(blog)
@@ -187,9 +187,9 @@ printBarPlot <- function(dfm, topN = 20, mainTitle = "Top 20 Features")
   topFeatures$feature <- with(topFeatures, reorder(feature, +frequency))
   
   #barplot(height = topFeatures, xlab = "Count", main = mainTitle, horiz = TRUE, las = 1, col = brewer.pal(8, "Dark2"))
-  ggplot(topFeatures, aes(x = feature, y = frequency, fill = feature)) +
+  ggplot(topFeatures, aes(x = feature, y = frequency, fill = factor(feature))) +
     geom_bar(stat="identity") + 
-    scale_fill_brewer(palette = colorRampPalette(brewer.pal(9,"Blues"))(topN)) +
+    theme_light() +
     coord_flip()
 }
 
@@ -200,7 +200,7 @@ printWordCloud <- function(dfm, maxWordCount, scale = c(4, .5))
 }
 ```
 
-#### 3.2.1 Unigram
+#### 3.2.2 Unigram
 
 ```{r "Unigram", echo = FALSE}
 #par(mfrow = c(1, 2))
@@ -208,39 +208,33 @@ printBarPlot(unigramdfm)
 printWordCloud(unigramdfm, 100)
 ```
 
-#### 3.2.2 Bigram
+#### 3.2.3 Bigram
 
 ```{r "Bigram", echo = FALSE}
 #par(mfrow = c(1, 2))
 printBarPlot(bigramdfm)
-printWordCloud(bigramdfm, 100)
+printWordCloud(bigramdfm, 40)
 ```
 
-#### 3.2.3 Trigram
+#### 3.2.4 Trigram
 
 ```{r "Trigram", echo = FALSE}
 #par(mfrow = c(1, 2))
 printBarPlot(trigramdfm)
-printWordCloud(trigramdfm, 20)
+printWordCloud(trigramdfm, 10)
 ```
 
 ## 4 Approach
 
-### 4.1 Preidction Model
+The prediction model will apply the [Katz's Back-off Model](https://en.wikipedia.org/wiki/Katz%27s_back-off_model) with Good-Turing Discounting. Due to limitation of the computing resources, the application will support up to trigram only.
 
-We will build a Shinny application which
-
-1. Use [Katz's Back-off Model](https://en.wikipedia.org/wiki/Katz%27s_back-off_model) with Good-Turing Discounting for our text prediction model
-2. Due to limitation of the computing resources, the application will support up to trigram
-
-### 4.1 Steps
-
-We will perform these steps when creating the prediction model:
+These are steps to perform
 
 1. Data Cleansing includes Removing stop words and bad words which are irrelevant for our prediction model
 2. Separate the dataset into training and testing set
 3. Use training dataset in the our model
 4. Use testing dataset to evaluate the performance of the model
+5. Build a shiny application to implement the text prediction
 
 ## Appendix
 
@@ -253,9 +247,9 @@ sessionInfo()
 ```{r}
 library(dplyr)
 
-uni <- textstat_frequency(unigramdfm) %>% select(feature, frequency)
-bi <- textstat_frequency(bigramdfm) %>% select(feature, frequency)
-tri <- textstat_frequency(trigramdfm) %>% select(feature, frequency)
+uni <- textstat_frequency(unigramdfm) %>% select(ngram = feature, freq = frequency)
+bi <- textstat_frequency(bigramdfm) %>% select(ngram = feature, freq = frequency)
+tri <- textstat_frequency(trigramdfm) %>% select(ngram = feature, freq = frequency)
 #quad <- textstat_frequency(quadgramdfm)
 
 #bi_dt <- bi %>% transform(first_term = sub("(.*)_(.*)", "\\1", feature), second_term = sub("(.*)_(.*)", "\\2", feature)) %>% select(first_term, second_term, frequency) 
