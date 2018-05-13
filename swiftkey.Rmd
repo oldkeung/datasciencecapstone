@@ -58,7 +58,7 @@ close(twitterConn)
 ### 2.2 Sampling
 
 ```{r, echo = FALSE}
-intervalPercent <- 10
+intervalPercent <- 60
 ```
 
 Due to limitation of computing resources, we will only use `r intervalPercent`% of data to generate the n-gram and perform exploratory data analysis.

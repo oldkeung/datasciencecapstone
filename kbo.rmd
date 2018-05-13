@@ -50,6 +50,37 @@ filterTxt <- c("years", "thing", "time", "weeks")
 #q <- "If this isn't the cutest thing you've ever seen, then you must be"
 #filterTxt <- c("callous", "asleep", "insane", "insensitive")
 
+# Q1 (die)
+q <- "When you breathe, I want to be the air for you. I'll be there for you, I'd live and I'd"
+filterTxt <- c("eat", "give", "die", "sleep")
+# Q2 (xfinancial, xspiritual)
+q <- "Guy at my table's wife got up to go to the bathroom and I asked about dessert and he started telling me about his"
+filterTxt <- c("spiritual", "financial", "marital", "horticultural")
+# Q3 (xmorning, weekend)
+#q <- "I'd give anything to see arctic monkeys this"
+#filterTxt <- c("decade", "morning", "month", "weekend")
+# Q4 (xhunger, stress)
+#q <- "Talking to your mom has the same effect as a hug and helps reduce your"
+#filterTxt <- c("hunger", "sleepiness", "happiness", "stress")
+# Q5 (xminute, xwalk)
+#q <- "When you were in Holland you were like 1 inch away from me but you hadn't time to take a"
+#filterTxt <- c("look", "picture", "minute", "walk")
+# Q6 (matter)
+#q <- "I'd just like all of these questions answered, a presentation of evidence, and a jury to settle the"
+#filterTxt <- c("case", "account", "incident", "matter")
+# Q7 (xarm, hand)
+#q <- "I can't deal with unsymetrical things. I can't even hold an uneven number of bags of groceries in each"
+#filterTxt <- c("arm", "hand", "toe", "finger")
+# Q8 (top)
+#q <- "Every inch of you is perfect from the bottom to the"
+#filterTxt <- c("top", "middle", "side", "center")
+# Q9 (outside)
+#q <- "I’m thankful my childhood was filled with imagination and bruises from playing"
+#filterTxt <- c("daily", "outside", "weekly", "inside")
+# Q10 (xpictures, movies)
+#q <- "I like how the same people are in almost all of Adam Sandler's"
+#filterTxt <- c("stories", "novels", "movies", "pictures")
+
 toks <- tokens(q, to_lower = TRUE, remove_punct = TRUE, remove_symbols = TRUE, remove_twitter = TRUE, remove_numbers = TRUE)
 toks <- tokens_remove(toks, stopwords('en'))
 tok <- unlist(toks)
@@ -57,7 +88,7 @@ bigPre <- paste(tok[length(tok) - 1], tok[length(tok)], sep = "_")
 ```
 
 ```{r "n-grams", cache = TRUE}
-load("freq50.rds")
+load("freq60.rds")
 unigs <- uni
 bigrs <- bi
 trigs <- tri
