@@ -14,7 +14,8 @@ shinyUI(navbarPage(
     fluidRow(
       textInput("first", h3("Text input"), value = "Enter text..."),
       submitButton(text = "Predict"),
-      textOutput("predict")
+      textOutput("predict"),
+      dataTableOutput("predictTable")
     )
     
   ),

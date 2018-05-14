@@ -9,10 +9,15 @@ shinyServer(
   
   function(input, output) {
 
-    load("ngram10.rds")
+    load("ngram5.rds")
     
     output$predict  <- renderText({ 
-      predict(input$first, ngram$uni, ngram$bi, ngram$tri)
+      qbo_trigrams <- predict(input$first, ngram$uni, ngram$bi, ngram$tri)
+      
+      output$predictTable <- qbo_trigrams
+      
+      qbo_trigrams$prob[1]
+      
     })
   }
   
