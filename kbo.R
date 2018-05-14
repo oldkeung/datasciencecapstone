@@ -382,9 +382,10 @@ predict <- function(q, unigs, bigrs, trigs) {
  
   qbo_trigrams <- rbind(qbo_obs_trigrams, qbo_unobs_trigrams)
   qbo_trigrams <- qbo_trigrams[order(-qbo_trigrams$prob), ]  # sort by desc prob
-  out_msg <- getPredictionMsg(qbo_trigrams)
+  printSample(qbo_trigrams)
+  #out_msg <- getPredictionMsg(qbo_trigrams)
   #out_msg
-  printSample(out_msg)
+  #printSample(out_msg)
   
   #q
   #bigPre
