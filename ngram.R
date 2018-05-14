@@ -121,13 +121,21 @@ generateNGram <- function(toks) {
   trigramdfm <- dfm(tokens_ngrams(toks, n = 3))
   
   uni <- textstat_frequency(unigramdfm) %>% select(ngram = feature, freq = frequency)
+  #bi <- textstat_frequency(bigramdfm) %>% select(ngram = feature, freq = frequency) %>% 
+  #  transform(first = sub("(.*)_(.*)", "\\1", ngram), last = sub("(.*)_(.*)", "\\2", ngram)) %>% 
+  #  select(ngram, first, last, freq) 
+  #tri <- textstat_frequency(trigramdfm) %>% select(ngram = feature, freq = frequency) %>% 
+  #  transform(first = sub("(.*)_(.*)", "\\1", ngram), last = sub("(.*)_(.*)", "\\2", ngram)) %>% 
+  #  select(ngram, first, last, freq) 
+
   bi <- textstat_frequency(bigramdfm) %>% select(ngram = feature, freq = frequency) %>% 
     transform(first = sub("(.*)_(.*)", "\\1", ngram), last = sub("(.*)_(.*)", "\\2", ngram)) %>% 
-    select(ngram, first, last, freq) 
+    select(ngram, freq) 
   tri <- textstat_frequency(trigramdfm) %>% select(ngram = feature, freq = frequency) %>% 
     transform(first = sub("(.*)_(.*)", "\\1", ngram), last = sub("(.*)_(.*)", "\\2", ngram)) %>% 
-    select(ngram, first, last, freq) 
+    select(ngram, freq) 
   
+    
   list("uni" = uni, "bi" = bi, "tri" = tri)
 
 }
