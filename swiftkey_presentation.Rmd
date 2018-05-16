@@ -1,0 +1,38 @@
+---
+title: "SwiftKey Text Prediction"
+author: "William Lai"
+date: "16 May 2018"
+framework   : html5slides        # {io2012, html5slides, shower, dzslides, ...}
+highlighter : highlight.js  # {highlight.js, prettify, highlight}
+hitheme     : tomorrow     
+output: slidy_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Introduction
+
+Due to the popularity of mobile devices in recent years, people has performed many daily activities, like email or social networking, in their mobile devices. There is increasing demand to improve the typing experience on the devices. SwiftKey builds a smart keyboard that makes it easier for people to type on their mobile devices. One cornerstone of their smart keyboard is predictive text models. 
+
+## Algorithm
+
+We will use [Katz's Back-off Model](https://en.wikipedia.org/wiki/Katz%27s_back-off_model) with Good-Turing Discounting for our prediction model. 
+
+- Bullet 1
+- Bullet 2
+- Bullet 3
+
+## Application
+
+```{r cars, echo = TRUE}
+summary(cars)
+```
+
+## Slide with Plot
+
+```{r pressure}
+plot(pressure)
+```
+
