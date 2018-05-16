@@ -12,10 +12,22 @@ shinyUI(navbarPage(
     "Home",
     
     fluidRow(
-      textInput("first", h3("Text input"), value = "Enter text..."),
-      submitButton(text = "Predict"),
-      textOutput("predict"),
+      
+      column(8,
+             textInput("first", "Text input", placeholder = "Enter text to predict..."),
+             actionButton("submit", "Predict")
+      ),
+      
+      column(4,
+             textOutput("predict")
+      )
+      
+    ),
+    
+    fluidRow(
+      
       dataTableOutput("predictTable")
+      
     )
     
   ),

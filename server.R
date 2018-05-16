@@ -7,32 +7,31 @@ source("kbo.R")
 
 shinyServer(
   
-  function(input, output) {
+  function(input, output, session) {
     
     load("ngram5.rds")
-    init <- TRUE
     
-    output$predict  <- renderText({
+    observeEvent(input$submit, {
       
-      if (!init)
-      {
+      withProgress(message = "Predicting Text", value = 0, {
         
         qbo_trigrams <- predict(input$first, ngram$uni, ngram$bi, ngram$tri)
         
-        a <- head(qbo_trigrams, 10) %>% mutate(last_term = str_split(ngram, "_"))[3] %>% select(last_term, prob)
+        predictResult <- head(qbo_trigrams, 10) %>% 
+          mutate(last_term = str_split_fixed(ngram, "_", 3)[, 3]) %>% 
+          select(last_term, prob)
+        
+        output$predict <- renderText(predictResult$last_term[1])
         
         output$predictTable <- renderDataTable(
-          a,
+          predictResult,
           options = list(searching = FALSE, paging = FALSE)
-          )
-    
-        qbo_trigrams$prob[1]
+        )
         
-      }
+      })
       
     })
     
-    init <- FALSE
   }
   
 )
