@@ -55,7 +55,7 @@ createThreeGramTableExtended = function(threeGramTable){
   # We now have two important objects: threeGramTable, threeGramTable_leftOverProb
   # ...
   
-  threeGramTable
+  threeGramTable_leftOverProb
 }
 
 ##########################################################################################################
