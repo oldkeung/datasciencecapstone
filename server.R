@@ -9,13 +9,15 @@ shinyServer(
   
   function(input, output, session) {
     
-    load("ngram5.rds")
+    load("ngram10.rds")
     
     observeEvent(input$submit, {
       
       withProgress(message = "Predicting Text", value = 0, {
         
         qbo_trigrams <- predict(input$first, ngram$uni, ngram$bi, ngram$tri)
+        
+        #incProgress(1/n, detail = paste("Doing part", i))
         
         predictResult <- head(qbo_trigrams, 10) %>% 
           mutate(last_term = str_split_fixed(ngram, "_", 3)[, 3]) %>% 

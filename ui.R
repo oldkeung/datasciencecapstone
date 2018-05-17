@@ -25,9 +25,11 @@ shinyUI(navbarPage(
     ),
     
     fluidRow(
-      
+      hr()
+    ),
+    
+    fluidRow(
       dataTableOutput("predictTable")
-      
     )
     
   ),

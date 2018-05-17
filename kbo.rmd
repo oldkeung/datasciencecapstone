@@ -53,7 +53,7 @@ filterTxt <- c("years", "thing", "time", "weeks")
 # Q1 (die)
 q <- "When you breathe, I want to be the air for you. I'll be there for you, I'd live and I'd"
 filterTxt <- c("eat", "give", "die", "sleep")
-# Q2 (xfinancial, xspiritual)
+# Q2 (xfinancial, xspiritual, xhorticultural, martial)
 q <- "Guy at my table's wife got up to go to the bathroom and I asked about dessert and he started telling me about his"
 filterTxt <- c("spiritual", "financial", "marital", "horticultural")
 # Q3 (xmorning, weekend)
@@ -62,7 +62,7 @@ filterTxt <- c("spiritual", "financial", "marital", "horticultural")
 # Q4 (xhunger, stress)
 #q <- "Talking to your mom has the same effect as a hug and helps reduce your"
 #filterTxt <- c("hunger", "sleepiness", "happiness", "stress")
-# Q5 (xminute, xwalk)
+# Q5 (xminute, xwalk, xlook, picture)
 #q <- "When you were in Holland you were like 1 inch away from me but you hadn't time to take a"
 #filterTxt <- c("look", "picture", "minute", "walk")
 # Q6 (matter)
