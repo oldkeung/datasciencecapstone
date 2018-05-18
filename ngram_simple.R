@@ -150,6 +150,7 @@ processData <- function(samplePercent = 10, removeStopWords = TRUE, removeBadWor
   if (removeBadWord)
     toks <- removeBadWord(toks)
   
+  generateNGram(toks, 1, "ngram_uni.rds")
   generateNGram(toks, 2, "ngram_bi.rds")
   generateNGram(toks, 3, "ngram_tri.rds")
   generateNGram(toks, 4, "ngram_quad.rds")
