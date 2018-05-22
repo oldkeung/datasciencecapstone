@@ -302,18 +302,22 @@ getPredictionMsg <- function(qbo_trigs) {
 #out_msg <- getPredictionMsg(qbo_trigrams)
 #out_msg
 
-printSample <- function(data)
+printSample <- function(data, title = "")
 {
-  head(data, 10)
+  
+  if (title != "")
+    print(paste("+++", title, "+++", sep = " "))
+  
+  print(head(data))
 }
 
 predict <- function(q, unigs, bigrs, trigs) {
   
-  toks <- tokens(q, to_lower = TRUE, remove_punct = TRUE, remove_symbols = TRUE, remove_twitter = TRUE, remove_numbers = TRUE)
-  toks <- tokens_remove(toks, stopwords('en'))
+  toks <- tokens(char_tolower(q), remove_punct = TRUE, remove_symbols = TRUE, remove_twitter = TRUE, remove_numbers = TRUE)
+  #toks <- tokens_remove(toks, stopwords('en'))
   tok <- unlist(toks)
   bigPre <- paste(tok[length(tok) - 1], tok[length(tok)], sep = "_")
-  bigPre
+  printSample(bigPre, title = "0 bigPre")
   
   ##### Step 3. Calculate Probabilities of Words Completing Observed Trigrams
   
@@ -321,7 +325,7 @@ predict <- function(q, unigs, bigrs, trigs) {
   # convert counts to probabilities
   qbo_obs_trigrams <- getObsTriProbs(obs_trigs, bigrs, bigPre, gamma3)
   #qbo_obs_trigrams
-  printSample(qbo_obs_trigrams)
+  printSample(qbo_obs_trigrams, title = "3 qbo_obs_trigrams")
   
   ##### Step 4. Calculate Probabilities of Words Completing Unobserved Trigrams
   
@@ -329,7 +333,7 @@ predict <- function(q, unigs, bigrs, trigs) {
   
   unobs_trig_tails <- getUnobsTrigTails(obs_trigs$ngram, unigs)
   #unobs_trig_tails
-  printSample(unobs_trig_tails)
+  printSample(unobs_trig_tails, title = "4.1 unobs_trig_tails")
   
   ##### Step 4.2 Calculate discounted probability mass at the bigram level α(wi−1):
   
@@ -337,7 +341,7 @@ predict <- function(q, unigs, bigrs, trigs) {
   unig <- unigs[unigs$ngram == unig,]
   alpha_big <- getAlphaBigram(unig, bigrs, gamma2)
   #alpha_big
-  printSample(alpha_big)
+  printSample(alpha_big, title = "4.2 alpha_big")
   
   ##### Step 4.3 Calculate backed off probabilities qBO for bigrams
   
@@ -355,26 +359,26 @@ predict <- function(q, unigs, bigrs, trigs) {
   qbo_unobs_bigrams <- getQboUnobsBigrams(unobs_bo_bigrams, unigs, alpha_big)
   qbo_bigrams <- rbind(qbo_obs_bigrams, qbo_unobs_bigrams)
   #qbo_bigrams
-  printSample(qbo_bigrams)
+  printSample(qbo_bigrams, title = "4.3 qbo_bigrams")
   
   ##### Checking the Bigram Calculations
   
   unobs <- qbo_bigrams[-1,]
-  sum(unobs$prob)
+  printSample(sum(unobs$prob), title = "4.3 sum(unobs$prob)")
  
   ##### Step 4.4 Calculate discounted probability mass at the trigram level α(wi−2,wi−1)
   
   bigram <- bigrs[bigrs$ngram %in% bigPre, ]
   alpha_trig <- getAlphaTrigram(obs_trigs, bigram, gamma3)
   #alpha_trig
-  printSample(alpha_trig)
+  printSample(alpha_trig, title = "4.4 alpha_trig")
   
   ##### Step 4.5 Calculate unobserved trigram probabilities qBO(wi|wi−2,wi−1)
  
   qbo_unobs_trigrams <- getUnobsTriProbs(bigPre, qbo_obs_bigrams,
                                          qbo_unobs_bigrams, alpha_trig)
   #qbo_unobs_trigrams
-  printSample(qbo_unobs_trigrams)
+  printSample(qbo_unobs_trigrams, title = "4.5 qbo_unobs_trigrams")
  
   unobs <- qbo_unobs_trigrams %>% transform(first_term = sub("(.*)_(.*)", "\\1", ngram), second_term = sub("(.*)_(.*)", "\\2", ngram)) %>% select(first_term, second_term, prob) 
  
@@ -382,8 +386,7 @@ predict <- function(q, unigs, bigrs, trigs) {
  
   qbo_trigrams <- rbind(qbo_obs_trigrams, qbo_unobs_trigrams)
   qbo_trigrams <- qbo_trigrams[order(-qbo_trigrams$prob), ]  # sort by desc prob
-  qbo_trigrams
-  #printSample(qbo_trigrams)
+  printSample(qbo_trigrams, title = "5 qbo_trigrams")
   #out_msg <- getPredictionMsg(qbo_trigrams)
   #out_msg
   

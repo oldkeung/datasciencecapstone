@@ -71,6 +71,10 @@ removeInvalidChar <- function(data)
   news <- iconv(data$news, from = "latin1", to = "ASCII", sub="")
   twitter <- iconv(data$twitter, from = "latin1", to = "ASCII", sub="")
   
+  blog <- gsub("_", " ", blog)
+  news <- gsub("_", " ", news)
+  twitter <- gsub("_", " ", twitter)
+  
   list("blog" = blog, "news" = news, "twitter" = twitter)
   
 }
