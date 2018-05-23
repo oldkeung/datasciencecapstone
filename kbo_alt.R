@@ -86,7 +86,7 @@ debug <- function(data, title = "") {
   
   print(head(data))
   
-  lastSysTime <- now
+  assign("lastSysTime", now, envir = globalenv())
   
 }
 
@@ -97,7 +97,7 @@ info <- function(title = "") {
   if (title != "")
     print(paste("+++", title, now, "(", now - lastSysTime, ")", "+++", sep=" "))
   
-  lastSysTime <- now
+  assign("lastSysTime", now, envir = globalenv())
   
 }
 
@@ -196,7 +196,7 @@ getQboUnobsBigrams <- function(unobsBoBigrams, uni, alpha) {
   qboUnobsBigs <- uni[base %in% qboUnobsBigs] %>% select(base, freq)
   
   denom <- sum(qboUnobsBigs$freq)
-
+  
   unobsBoBigrams %>% 
     inner_join(qboUnobsBigs, by = c("predict" = "base")) %>%
     mutate(prob = alpha * freq / denom) %>% 
@@ -223,12 +223,14 @@ getUnobsTriProbs <- function(preTxt, qboObsBigrams,
   
   #return(unobsTrigDf)
   
-  qboBigrams <- rbind(qboObsBigrams, qboUnobsBigrams) %>% arrange(desc(prob))
+  qboBigrams <- rbind(qboObsBigrams, qboUnobsBigrams)
+  #%>% arrange(desc(prob))
   #debug(qboBigrams, title = "qboBigrams")
   sumQboBigs <- sum(qboBigrams$prob)
-  unobsTrigNgrams <- qboObsBigrams %>% 
+  qboObsBigrams %>% 
     mutate(base = paste(preTxt$preTxtBo, base, sep = "_"), prob = alphaTrig * prob / sumQboBigs) %>%
     select(base, predict, prob)
+  
 }
 
 #predict <- function(q, uni, bi, tri, quad, pent) {
@@ -258,8 +260,9 @@ predict <- function(q) {
   
   debug(alpha, title = "alpha")
   
+  #4.3
   boBi <- getBoBigrams(preTxt, unObsTail)
-  debug(boBi, title = "boBi")
+  debug(boBi, title = "4.3 boBi")
   
   obs_bo_bi <- getObsBoBigrams(boBi, bi)
   debug(obs_bo_bi, title = "obs_bo_bi")
@@ -280,21 +283,33 @@ predict <- function(q) {
   
   # 4.4
   bigram <- bi[base == preTxt$preTxtBo & predict == preTxt$preTxtTail]
-  debug(bigram, "bigram")
+  debug(bigram, "4.4 bigram")
   alpha_trig <- getAlphaTrigram(obs, bigram)
-  debug(alpha_trig, "alpha_trig")
+  debug(alpha_trig, "4.4 alpha_trig")
    
   #4.5
   qbo_unobs_trigrams <- getUnobsTriProbs(preTxt, obs_bo_bi_prob,
                                          un_obs_bo_bi_prob, alpha_trig)
-  debug(qbo_unobs_trigrams, title = "qbo_unobs_trigrams")
+  debug(qbo_unobs_trigrams, title = "4.5 qbo_unobs_trigrams")
   
   #5
   obs <- obs %>% select(base, predict, prob)
-  qbo_trigrams <- rbind(obs, qbo_unobs_trigrams) %>% arrange(desc(prob))
+  #debug(nrow(obs), "nrow(obs)")
+  #debug(nrow(qbo_unobs_trigrams), "nrow(qbo_unobs_trigrams)")
+  #debug(max(obs$prob), "max(obs$prob)")
+  #debug(max(qbo_unobs_trigrams$prob), "max(qbo_unobs_trigrams$prob)")
+
+  obs_sort <- head(obs[order(-obs$prob), ], 30)
+  qbo_unobs_trigrams_sort <- qbo_unobs_trigrams[qbo_unobs_trigrams$prob > min(obs_sort$prob)]
+  qbo_trigrams_sort <- rbind(obs_sort, qbo_unobs_trigrams_sort) %>% arrange(desc(prob))
+  debug(qbo_trigrams_sort, title = "5 qbo_trigrams_sort")
+  
+  #qbo_trigrams <- rbind(obs, qbo_unobs_trigrams)  
+  #qbo_trigrams <- qbo_trigrams[sort(qbo_trigrams$prob, decreasing = TRUE, method = "quick")]
   #qbo_trigrams <- qbo_trigrams[order(-qbo_trigrams$prob), ]  # sort by desc prob
-  debug(qbo_trigrams, title = "5 qbo_trigrams")
+  #debug(qbo_trigrams, title = "5 qbo_trigrams")
   
   info(title = "End")
+  qbo_trigrams_sort
   
 }

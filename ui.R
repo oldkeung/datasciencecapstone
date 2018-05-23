@@ -29,7 +29,9 @@ shinyUI(navbarPage(
     ),
     
     fluidRow(
-      dataTableOutput("predictTable")
+      column(4, dataTableOutput("predictTable01to10")),
+      column(4, dataTableOutput("predictTable11to20")),
+      column(4, dataTableOutput("predictTable21to30"))
     )
     
   ),
